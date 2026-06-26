@@ -749,23 +749,6 @@ populateGroupFilter();
 applyGlobalFilters();
 }
 
-         // Ordenar por nombre
-        window.cleanDataset.sort((a, b) => a.nombre.localeCompare(b.nombre));
-        // Inicializar dataset filtrado globalmente con todos los registros
-        window.filteredDataset = [...window.cleanDataset];
-        currentPage = 1;
-
-        // Actualizar fecha de corte y mostrar el dashboard
-        document.getElementById('cutoff-date-badge').innerText = cutoffDateValue;
-        document.getElementById('dashboard-content').classList.remove('hidden');
-
-        // Poblar el filtro de grupo con los datos ya cargados
-        populateGroupFilter();
-
-        // Aplicar filtros globales (búsqueda + grupo) y desde ahí recalcular KPIs, gráficos y tabla
-        applyGlobalFilters();
-    }
-
         // Renderizadores de Datos
         function renderKPIs() {
             const total = window.filteredDataset.length;
