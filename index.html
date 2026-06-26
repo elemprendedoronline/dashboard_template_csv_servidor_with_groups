@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Igualdad Salarial y de Género 2025</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f5f3ff',
+                            100: '#edd8ff',
+                            200: '#ddd0fe',
+                            500: '#7c3aed', // Púrpura de equidad salarial y género
+                            600: '#6d28d9',
+                            700: '#5b21b6',
+                            900: '#2e1065',
+                        },
+                        gold: {
+                            500: '#d97706',
+                            600: '#b45309',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght=0,600;1,400&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PapaParse para procesamiento CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- Confetti para celebrar cargas y compartición -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- Script de carga inmediata preventiva en head para evitar fallos de onError del logo -->
+    <script>
+        function showLogoFallback(img) {
+            if (img) {
+                img.style.display = 'none';
+            }
+            setTimeout(function() {
+                const fallback = document.getElementById('logo-fallback');
+                if (fallback) {
+                    fallback.classList.remove('hidden');
+                }
+            }, 0);
+        }
+        window.showLogoFallback = showLogoFallback;
+    </script>
+
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .font-serif {
+            font-family: 'Playfair Display', serif;
+        }
+        /* Ocultar barra de scroll de forma estética */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col antialiased">
+
+    <!-- Indicador de Carga Inicial (Garantizado a ocultarse) -->
+    <div id="global-loading" class="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center transition-opacity duration-300">
+        <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center gap-4 max-w-xs text-center">
+            <div class="w-12 h-12 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin"></div>
+            <div>
+ <p class="font-bold text-slate-900 text-sm">Sincronizando con Taltura</p>
+<p class="text-xs text-slate-500 mt-1">Obteniendo archivo de datos 'dashboard.csv' desde Taltura y renderizando métricas...</p>            </div>
+        </div>
+    </div>
+
+    <!-- Banner Informativo de Carga en modo Local/Demo de Respaldo -->
+    <div id="github-sync-banner" class="hidden bg-gradient-to-r from-amber-600 to-orange-700 text-white py-2 px-4 text-center text-xs font-semibold relative">
+<span class="inline-flex items-center gap-1.5">
+    <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
+    Modo demostración: No se pudo obtener el CSV desde Taltura. Se están usando datos de ejemplo.
+</span>
+    </div>
+
+    <!-- Header Principal -->
+    <header class="bg-white border-b border-slate-100 shadow-sm sticky top-0 z-40 transition-all">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <!-- Branding / Logo -->
+            <div class="flex items-center gap-4 w-full lg:w-auto">
+                <div class="relative flex items-center gap-3">
+                    <div class="bg-slate-50 p-1.5 rounded-xl border border-slate-100 shadow-inner flex items-center justify-center">
+                        <img id="brand-logo" src="logo el emprendedor x270 de alto.png" alt="El Emprendedor Logo" 
+                             class="h-14 w-auto object-contain transition-all max-w-[150px]"
+                             onerror="showLogoFallback(this)">
+                        <div id="logo-fallback" class="hidden h-14 w-14 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-md">
+                            EE
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-50 text-brand-700 tracking-wider uppercase">Organización: INGENIUM</span>
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">Edición 2025</span>
+                    </div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 mt-1">Capacitación: Igualdad Salarial y de Género (40h)</h1>
+                </div>
+            </div>
+
+            <!-- Metadatos de Corte -->
+            <div class="flex items-center gap-3 w-full lg:w-auto justify-end">
+                <div class="bg-slate-100/80 rounded-lg px-4 py-2 border border-slate-200/50 text-right">
+                    <p class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">Fecha de Corte (Último Push)</p>
+                    <p class="text-sm font-semibold text-slate-800" id="cutoff-date-badge">10 de junio de 2026</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal de la App -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Dashboard Analytics -->
+        <div id="dashboard-content" class="space-y-6">
+            
+            <!-- KPIs Principales -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <!-- Tarjeta 1: Total Participantes -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between transition hover:shadow-md">
+                    <div class="space-y-1">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Inscritos</p>
+                        <h3 class="text-3xl font-extrabold text-slate-900" id="kpi-total-enrolled">0</h3>
+                        <p class="text-xs text-slate-500">Colaboradores registrados</p>
+                    </div>
+                    <div class="p-3.5 bg-blue-50 text-blue-600 rounded-2xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 2: Tasa de Finalización -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between transition hover:shadow-md">
+                    <div class="space-y-1">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tasa Finalización</p>
+                        <h3 class="text-3xl font-extrabold text-emerald-600" id="kpi-completion-rate">0%</h3>
+                        <div class="w-32 bg-slate-100 h-1.5 rounded-full overflow-hidden mt-2">
+                            <div id="kpi-progress-bar" class="bg-emerald-500 h-1.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-2xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0110 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.745 3.745 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 3: Usuarios que completaron el curso -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between transition hover:shadow-md">
+                    <div class="space-y-1">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Usuarios que completaron el curso</p>
+                        <h3 class="text-3xl font-extrabold text-brand-600" id="kpi-total-completed">0</h3>
+                        <p class="text-xs text-slate-500">Han culminado los 5 módulos</p>
+                    </div>
+                    <div class="p-3.5 bg-brand-50 text-brand-600 rounded-2xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.62 48.62 0 0112 20.904a48.62 48.62 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A5.905 5.905 0 018 3.743 9.49 9.49 0 0112 3c1.44 0 2.798.322 4 .9a5.905 5.905 0 014.137 5.59c-.852.232-1.74.505-2.658.813m-11.143 0l8.61 2.87a1.214 1.214 0 00.74 0l8.61-2.87m-11.143 0v6.409m4-1.428v3.29a3.075 3.075 0 01-3 3.013z" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 4: En Curso / Pendientes -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex items-center justify-between transition hover:shadow-md">
+                    <div class="space-y-1">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Usuarios en Progreso / Pendientes</p>
+                        <h3 class="text-3xl font-extrabold text-amber-500" id="kpi-total-pending">0</h3>
+                        <p class="text-xs text-slate-500">Avance parcial o sin iniciar</p>
+                    </div>
+                    <div class="p-3.5 bg-amber-50 text-amber-600 rounded-2xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de Gráficos e Información Clave -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Tarjeta: Estado por Módulo -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm lg:col-span-2 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900">Finalización de Módulos</h3>
+                                <p class="text-xs text-slate-500">Progreso individualizado por módulo temático</p>
+                            </div>
+                            <span class="text-xs font-semibold px-2 py-1 bg-brand-50 text-brand-600 rounded">Total: 5 Módulos</span>
+                        </div>
+                        <div class="space-y-4" id="module-progress-bars">
+                            <!-- Barras generadas dinámicamente -->
+                        </div>
+                    </div>
+                    <div class="pt-4 border-t border-slate-100 mt-6 flex justify-between items-center text-xs text-slate-500">
+                        <span>* Información sincronizada automáticamente desde Taltura.</span>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Dona: Distribución de Estados -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 mb-1">Distribución del Estado</h3>
+                        <p class="text-xs text-slate-500 mb-4">Estado global de finalización</p>
+                        <div class="relative w-full h-52 flex items-center justify-center">
+                            <canvas id="completion-donut-chart"></canvas>
+                        </div>
+                    </div>
+                    <div class="flex justify-around items-center pt-4 border-t border-slate-100 mt-4 text-xs font-semibold">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                            <span>Finalizado</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                            <span>No finalizado</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historial Temporal y Análisis por Dominio -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Gráfico de Línea: Curva Temporal de Graduados -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm lg:col-span-2">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Línea de Tiempo de Graduados</h3>
+                            <p class="text-xs text-slate-500">Comportamiento acumulado de finalizaciones en 2026</p>
+                        </div>
+                        <div class="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded">
+                            Evolución mensual
+                        </div>
+                    </div>
+                    <div class="h-64">
+                        <canvas id="timeline-line-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Análisis por Dominio Organizacional / Áreas -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 mb-1">Participación por Dominio</h3>
+                        <p class="text-xs text-slate-500 mb-4">Finalización según dominio de correo corporativo</p>
+                        <div class="space-y-3 overflow-y-auto max-h-60 pr-1" id="domain-list">
+                            <!-- Items de dominio dinámicos -->
+                        </div>
+                    </div>
+                    <div class="pt-3 border-t border-slate-100 text-center text-xs text-slate-400">
+                        Permite identificar sub-compañías y áreas críticas.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Central: Listado General de Colaboradores e Interacción -->
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <!-- Cabecera de la tabla con herramientas -->
+                <div class="p-5 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Directorio de Capacitación</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Listado detallado del avance de los colaboradores</p>
+                    </div>
+                    <!-- Filtros e Interacción -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Buscador -->
+                        <div class="relative w-full sm:w-60">
+                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.602 10.602z" />
+                                </svg>
+                            </span>
+                            <input type="text" id="table-search-input" onkeyup="filterTable()" placeholder="Buscar por nombre o correo..." class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition outline-none">
+                        </div>
+                        <!-- Selector de Estado -->
+                        <select id="table-filter-status" onchange="filterTable()" class="px-3 py-2 border border-slate-200 rounded-lg text-xs bg-white text-slate-600 font-medium focus:ring-2 focus:ring-brand-500 transition outline-none">
+                            <option value="todos">Todos los Estados</option>
+                            <option value="finalizado">Completados</option>
+                            <option value="no-finalizado">Pendientes/En Curso</option>
+                        </select>
+                        <!-- Botón de Descargar Reporte Filtrado -->
+                        <button onclick="exportFilteredData()" class="px-3.5 py-2 border border-slate-200 rounded-lg text-xs bg-white hover:bg-slate-50 text-slate-700 font-semibold flex items-center gap-1.5 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                            </svg>
+                            Descargar Reporte (.csv)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabla Interactiva -->
+                <div class="overflow-x-auto w-full">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100/50 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
+                                <th class="py-3 px-5">ID</th>
+                                <th class="py-3 px-5">Nombre Completo</th>
+                                <th class="py-3 px-5">Dirección de Correo</th>
+                                <th class="py-3 px-5 text-center">Progreso</th>
+                                <th class="py-3 px-5 text-center">M1</th>
+                                <th class="py-3 px-5 text-center">M2</th>
+                                <th class="py-3 px-5 text-center">M3</th>
+                                <th class="py-3 px-5 text-center">M4</th>
+                                <th class="py-3 px-5 text-center">M5</th>
+                                <th class="py-3 px-5 text-center">Curso Finalizado</th>
+                                <th class="py-3 px-5 text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="colaboradores-table-body" class="divide-y divide-slate-100 text-xs text-slate-700">
+                            <!-- Generado dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginación / Resumen de Filas -->
+                <div class="p-4 border-t border-slate-100 bg-slate-50/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-500">
+                    <div id="table-row-count">Mostrando 0 registros</div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="prevPage()" id="btn-prev-page" class="p-1.5 rounded border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-white transition cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                            </svg>
+                        </button>
+                        <span id="table-page-indicator" class="font-bold text-slate-700 px-3">Página 1 de 1</span>
+                        <button onclick="nextPage()" id="btn-next-page" class="p-1.5 rounded border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-white transition cursor-pointer">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: Detalle de Participante -->
+    <div id="participant-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b border-slate-100 bg-gradient-to-r from-brand-600 to-indigo-700 text-white flex items-center justify-between">
+                <div class="space-y-1">
+                    <p class="text-[10px] uppercase font-bold tracking-widest text-brand-100">Expediente de Capacitación</p>
+                    <h3 class="text-lg font-bold" id="modal-participant-name">-</h3>
+                </div>
+                <button onclick="closeModal()" class="text-white hover:text-brand-200 transition p-1 bg-white/10 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-1 space-y-6">
+                <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200/50">
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">ID del usuario</p>
+                        <p class="text-sm font-semibold text-slate-800" id="modal-participant-id">-</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Dirección de Correo</p>
+                        <p class="text-sm font-semibold text-slate-800 break-words" id="modal-participant-email">-</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <h4 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Progreso por Módulo Temático</h4>
+                    <div id="modal-modules-checklist" class="space-y-2">
+                        <!-- Checklist dinámico -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button onclick="closeModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-lg text-xs font-semibold text-slate-700 transition">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenedor del Toast de Notificaciones -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-2"></div>
+
+    <!-- Script Principal Sólido con Garantía de Ocultación de Loader -->
+    <script type="module">
+        // Estado Operativo Global
+        window.rawDataset = [];
+        window.cleanDataset = [];
+        window.filteredDataset = [];
+        let selectedParticipant = null;
+        let currentPage = 1;
+        const rowsPerPage = 10;
+
+        let completionChartInstance = null;
+        let timelineChartInstance = null;
+
+        const MODULE_NAMES = [
+            "Módulo 1: Género e inclusión laboral",
+            "Módulo 2: Equidad e igualdad de género en las organizaciones",
+            "Módulo 3: Derechos laborales de mujeres y hombres",
+            "Módulo 4:  Atención de denuncias por discriminación salarial",
+            "Módulo 5:   Erradicar la violencia de género en las organizaciones"
+        ];
+
+        const MODULE_DATE_KEYS = [
+            "Módulo 1: Género e inclusión laboral - Fecha de finalización",
+            "Módulo 2: Equidad e igualdad de género en las organizaciones - Fecha de finalización",
+            "Módulo 3: Derechos laborales de mujeres y hombres - Fecha de finalización",
+            "Módulo 4:  Atención de denuncias por discriminación salarial - Fecha de finalización",
+            "Módulo 5:   Erradicar la violencia de género en las organizaciones - Fecha de finalización"
+        ];
+
+        // Función de utilidad robusta para escapar caracteres HTML especiales (Previene XSS y fallos de sintaxis al renderizar)
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Función de utilidad robusta de normalización de llaves (Corrige BOM, minúsculas, espacios adicionales y acentos de manera segura)
+        function normalizeKeyString(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "") // Remueve acentos
+                .replace(/^\uFEFF/, '')          // Remueve BOM de Excel
+                .toLowerCase()
+                .replace(/\s+/g, ' ')            // Colapsa múltiples espacios
+                .trim();
+        }
+
+        // Función de utilidad para coincidencia flexible de llaves CSV
+        function getRowValueByLooseKey(row, searchKey) {
+            if (!row) return '';
+            const normalizedSearch = normalizeKeyString(searchKey);
+            
+            for (let key in row) {
+                if (row.hasOwnProperty(key)) {
+                    if (normalizeKeyString(key) === normalizedSearch) {
+                        return row[key] !== undefined && row[key] !== null ? String(row[key]).trim() : '';
+                    }
+                }
+            }
+            
+            // Coincidencia inteligente del número de módulo
+            const moduleMatch = searchKey.match(/Módulo \d/i);
+            if (moduleMatch) {
+                const normalizedModuleNum = normalizeKeyString(moduleMatch[0]);
+                for (let key in row) {
+                    if (row.hasOwnProperty(key)) {
+                        const normalizedKey = normalizeKeyString(key);
+                        if (normalizedKey.includes(normalizedModuleNum) && !normalizedKey.includes("fecha")) {
+                            return row[key] !== undefined && row[key] !== null ? String(row[key]).trim() : '';
+                        }
+                    }
+                }
+            }
+            return '';
+        }
+
+        // Función de utilidad flexible para coincidencia de fechas de módulos
+        function getRowDateValueByLooseKey(row, searchKey) {
+            if (!row) return '';
+            const normalizedSearch = normalizeKeyString(searchKey);
+            
+            for (let key in row) {
+                if (row.hasOwnProperty(key)) {
+                    if (normalizeKeyString(key) === normalizedSearch) {
+                        return row[key] !== undefined && row[key] !== null ? String(row[key]).trim() : '';
+                    }
+                }
+            }
+            const moduleMatch = searchKey.match(/Módulo \d/i);
+            if (moduleMatch) {
+                const normalizedModuleNum = normalizeKeyString(moduleMatch[0]);
+                for (let key in row) {
+                    if (row.hasOwnProperty(key)) {
+                        const normalizedKey = normalizeKeyString(key);
+                        if (normalizedKey.includes(normalizedModuleNum) && normalizedKey.includes("fecha")) {
+                            return row[key] !== undefined && row[key] !== null ? String(row[key]).trim() : '';
+                        }
+                    }
+                }
+            }
+            return '';
+        }
+
+        // Formateador de fecha HTTP (Header Last-Modified)
+        function formatHeaderDate(dateObj) {
+            if (!dateObj || isNaN(dateObj.getTime())) return "10 de junio de 2026";
+            const meses = [
+                "enero", "febrero", "marzo", "abril", "mayo", "junio", 
+                "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+            ];
+            const dia = dateObj.getDate();
+            const mesStr = meses[dateObj.getMonth()];
+            const anio = dateObj.getFullYear();
+            return `${dia} de ${mesStr} de ${anio}`;
+        }
+
+        // Ocultar Loader de forma segura
+        function hideGlobalLoader() {
+            const globalLoader = document.getElementById('global-loading');
+            if (globalLoader) {
+                globalLoader.classList.add('opacity-0');
+                setTimeout(() => {
+                    globalLoader.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+ // Sincronización Automática con Taltura (CSV externo)
+// Sincronización Automática con Taltura (CSV externo)
+async function fetchCSVFromGitHub() {
+    // URL del CSV generado por Moodle/Taltura
+    const CSV_URL = 'https://taltura.org/recursos/dashboards_Igualdad_Salarial/dashboard.csv';
+
+    let response = null;
+
+    try {
+        // Intentar leer directamente desde la URL externa
+        try {
+            response = await fetch(`${CSV_URL}?t=${Date.now()}`, {
+                redirect: 'follow',
+                cache: 'no-store'
+            });
+        } catch (e) {
+            console.warn(`No se pudo leer el archivo en la URL externa: ${CSV_URL}`, e);
+        }
+
+        // BLOQUE DE DIAGNÓSTICO
+        if (!response) {
+            console.error("[DEBUG TALTURA] No se obtuvo respuesta del servidor de Taltura.");
+        } else {
+            console.log(
+                "[DEBUG TALTURA] URL final:",
+                response.url,
+                "| status:",
+                response.status,
+                "| redirected:",
+                response.redirected
+            );
+        }
+
+        if (!response || !response.ok) {
+            console.warn("No se pudo obtener 'dashboard.csv' desde Taltura. Usando datos muestra.");
+            document.getElementById('github-sync-banner').classList.remove('hidden');
+            loadDemoData(true);
+            return;
+        }
+
+        // Intentar leer la fecha del push desde las cabeceras HTTP del servidor
+        let cutoffDate = "10 de junio de 2026";
+        const lastModHeader = response.headers.get('Last-Modified');
+        if (lastModHeader) {
+            cutoffDate = formatHeaderDate(new Date(lastModHeader));
+        }
+
+        const csvText = await response.text();
+        const papa = window.Papa;
+
+        if (!papa) {
+            console.error("Librería PapaParse no disponible.");
+            loadDemoData(true);
+            return;
+        }
+
+        papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function(results) {
+                try {
+                    if (results.data && results.data.length > 0) {
+                        const sanitizedData = results.data.map(row => {
+                            const cleanRow = {};
+                            for (let key in row) {
+                                if (row.hasOwnProperty(key)) {
+                                    const sanitizedKey = key.replace(/^\uFEFF/, '').trim();
+                                    cleanRow[sanitizedKey] = row[key];
+                                }
+                            }
+                            return cleanRow;
+                        });
+
+                        processUploadedData(sanitizedData, cutoffDate);
+                    } else {
+                        loadDemoData(true);
+                    }
+                } catch (err) {
+                    console.error("Fallo parseando contenido CSV:", err);
+                    loadDemoData(true);
+                }
+            },
+            error: function(err) {
+                console.error("Error PapaParse:", err);
+                loadDemoData(true);
+            }
+        });
+
+    } catch (globalErr) {
+        console.error("Error global en el fetch de sincronización:", globalErr);
+        loadDemoData(true);
+    } finally {
+        hideGlobalLoader();
+    }
+}
+
+        function processUploadedData(data, cutoffDateValue) {
+            window.rawDataset = data;
+            
+            // Filtrar filas completamente vacías o sin identificador/nombre mínimo utilizando el Loose Key Matcher
+            const validRows = window.rawDataset.filter(item => {
+                if (!item || typeof item !== 'object') return false;
+                const hasId = getRowValueByLooseKey(item, 'id') || getRowValueByLooseKey(item, 'numero de id');
+                const hasName = getRowValueByLooseKey(item, 'nombre');
+                const hasEmail = getRowValueByLooseKey(item, 'direccion de correo') || getRowValueByLooseKey(item, 'correo') || getRowValueByLooseKey(item, 'email');
+                return !!(hasId || hasName || hasEmail);
+            });
+
+            window.cleanDataset = validRows.map(item => {
+                let completedCount = 0;
+                
+                // Mapear los valores de los módulos de manera tolerante a espaciados y BOMs
+                const m1_val = getRowValueByLooseKey(item, MODULE_NAMES[0]);
+                const m2_val = getRowValueByLooseKey(item, MODULE_NAMES[1]);
+                const m3_val = getRowValueByLooseKey(item, MODULE_NAMES[2]);
+                const m4_val = getRowValueByLooseKey(item, MODULE_NAMES[3]);
+                const m5_val = getRowValueByLooseKey(item, MODULE_NAMES[4]);
+
+                const m1_date = getRowDateValueByLooseKey(item, MODULE_DATE_KEYS[0]);
+                const m2_date = getRowDateValueByLooseKey(item, MODULE_DATE_KEYS[1]);
+                const m3_date = getRowDateValueByLooseKey(item, MODULE_DATE_KEYS[2]);
+                const m4_date = getRowDateValueByLooseKey(item, MODULE_DATE_KEYS[3]);
+                const m5_date = getRowDateValueByLooseKey(item, MODULE_DATE_KEYS[4]);
+
+                const mValues = [m1_val, m2_val, m3_val, m4_val, m5_val];
+                mValues.forEach(val => {
+                    if (String(val).trim().toLowerCase() === 'finalizado') {
+                        completedCount++;
+                    }
+                });
+
+                // Curso finalizado
+                const cursoFinVal = getRowValueByLooseKey(item, "Curso finalizado");
+                const isCourseDone = (completedCount === 5 || cursoFinVal.toLowerCase() === 'finalizado' || !!cursoFinVal.match(/\d+/));
+                
+                let globalCompletionDate = "";
+                if (isCourseDone) {
+                    if (cursoFinVal && cursoFinVal.match(/\d+/)) {
+                        globalCompletionDate = cursoFinVal;
+                    } else {
+                        const dates = [m1_date, m2_date, m3_date, m4_date, m5_date].filter(d => d);
+                        if (dates.length > 0) {
+                            globalCompletionDate = dates[dates.length - 1];
+                        } else {
+                            globalCompletionDate = "10/06/2026 12:28";
+                        }
+                    }
+                }
+
+                const idVal = getRowValueByLooseKey(item, 'id') || getRowValueByLooseKey(item, 'numero de id') || Math.random().toString(36).substr(2, 9);
+                const nombreVal = getRowValueByLooseKey(item, 'nombre') || 'Colaborador Sin Nombre';
+                const emailVal = getRowValueByLooseKey(item, 'direccion de correo') || getRowValueByLooseKey(item, 'correo') || getRowValueByLooseKey(item, 'email') || 'sin-correo@ilsa.la';
+
+                return {
+                    id: idVal,
+                    nombre: nombreVal,
+                    email: emailVal,
+                    m1: m1_val || 'No finalizado',
+                    m1_date: m1_date || '',
+                    m2: m2_val || 'No finalizado',
+                    m2_date: m2_date || '',
+                    m3: m3_val || 'No finalizado',
+                    m3_date: m3_date || '',
+                    m4: m4_val || 'No finalizado',
+                    m4_date: m4_date || '',
+                    m5: m5_val || 'No finalizado',
+                    m5_date: m5_date || '',
+                    completado: isCourseDone,
+                    modulos_completados: completedCount,
+                    fecha_fin: globalCompletionDate
+                };
+            });
+
+            window.cleanDataset.sort((a, b) => a.nombre.localeCompare(b.nombre));
+            window.filteredDataset = [...window.cleanDataset];
+            currentPage = 1;
+
+            document.getElementById('cutoff-date-badge').innerText = cutoffDateValue;
+            document.getElementById('dashboard-content').classList.remove('hidden');
+
+            renderKPIs();
+            renderCharts();
+            renderModuleBreakdown();
+            renderDomainBreakdown();
+            renderTable();
+        }
+
+        // Renderizadores de Datos
+        function renderKPIs() {
+            const total = window.cleanDataset.length;
+            const completed = window.cleanDataset.filter(item => item.completado).length;
+            const pending = total - completed;
+            const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+            document.getElementById('kpi-total-enrolled').innerText = total;
+            document.getElementById('kpi-completion-rate').innerText = rate + "%";
+            document.getElementById('kpi-progress-bar').style.width = rate + "%";
+            document.getElementById('kpi-total-completed').innerText = completed;
+            document.getElementById('kpi-total-pending').innerText = pending;
+        }
+
+        function renderModuleBreakdown() {
+            const container = document.getElementById('module-progress-bars');
+            container.innerHTML = '';
+            const totalParticipants = window.cleanDataset.length;
+
+            MODULE_NAMES.forEach((modName, idx) => {
+                const cleanKey = `m${idx + 1}`;
+                const completedCount = window.cleanDataset.filter(item => String(item[cleanKey]).toLowerCase() === 'finalizado').length;
+                const percentage = totalParticipants > 0 ? Math.round((completedCount / totalParticipants) * 100) : 0;
+
+                const colors = ['from-purple-500 to-indigo-500', 'from-blue-500 to-cyan-500', 'from-emerald-500 to-teal-500', 'from-amber-500 to-orange-500', 'from-rose-500 to-pink-500'];
+                const selectedGradient = colors[idx % colors.length];
+
+                const cardHtml = `
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-bold text-slate-700 max-w-xs sm:max-w-md truncate">${escapeHtml(modName)}</span>
+                            <span class="font-bold text-slate-900">${completedCount} <span class="text-slate-400 font-medium">(${percentage}%)</span></span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden flex shadow-inner">
+                            <div class="bg-gradient-to-r ${selectedGradient} h-2.5 rounded-full transition-all duration-1000" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += cardHtml;
+            });
+        }
+
+        function renderDomainBreakdown() {
+            const domainList = document.getElementById('domain-list');
+            domainList.innerHTML = '';
+
+            const domains = {};
+            window.cleanDataset.forEach(item => {
+                const parts = item.email.split('@');
+                const domain = parts.length > 1 ? parts[1].toLowerCase() : 'otros';
+                if (!domains[domain]) {
+                    domains[domain] = { total: 0, completed: 0 };
+                }
+                domains[domain].total++;
+                if (item.completado) {
+                    domains[domain].completed++;
+                }
+            });
+
+            const sortedDomains = Object.keys(domains).sort((a, b) => domains[b].total - domains[a].total);
+
+            sortedDomains.forEach(dom => {
+                const stats = domains[dom];
+                const rate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+
+                const domHtml = `
+                    <div class="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50 transition border border-slate-100">
+                        <div class="min-w-0 flex-1 pr-2">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+                                <span class="text-xs font-bold text-slate-800 truncate select-all font-mono">@${escapeHtml(dom)}</span>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-medium">${stats.total} colaboradores • ${stats.completed} graduados</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-bold ${rate === 100 ? 'text-emerald-600' : 'text-slate-700'}">${rate}%</span>
+                            <p class="text-[9px] text-slate-400 uppercase tracking-widest font-bold">Avance</p>
+                        </div>
+                    </div>
+                `;
+                domainList.innerHTML += domHtml;
+            });
+        }
+
+        function renderCharts() {
+            const total = window.cleanDataset.length;
+            const completed = window.cleanDataset.filter(item => item.completado).length;
+            const pending = total - completed;
+
+            const chartLoader = window.Chart;
+            if (!chartLoader) return;
+
+            // Chart 1: Dona de distribución
+            const ctxDonutEl = document.getElementById('completion-donut-chart');
+            if (ctxDonutEl) {
+                if (completionChartInstance) {
+                    completionChartInstance.destroy();
+                }
+                const ctxDonut = ctxDonutEl.getContext('2d');
+                completionChartInstance = new chartLoader(ctxDonut, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Completado', 'Pendiente / En Progreso'],
+                        datasets: [{
+                            data: [completed, pending],
+                            backgroundColor: ['#10b981', '#fbbf24'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff',
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        cutout: '72%'
+                    }
+                });
+            }
+
+            const completedDates = window.cleanDataset
+                .filter(item => item.completado && item.fecha_fin)
+                .map(item => {
+                    const cleanDateStr = String(item.fecha_fin).trim();
+                    const parts = cleanDateStr.split(' ');
+                    return parts[0];
+                });
+
+            const dateCounts = {};
+            completedDates.forEach(d => {
+                dateCounts[d] = (dateCounts[d] || 0) + 1;
+            });
+
+            // Parser de fecha seguro frente a excepciones e inconsistencias del Excel
+            const parseDate = (dStr) => {
+                try {
+                    if (!dStr || typeof dStr !== 'string') return new Date(0);
+                    const datePartOnly = dStr.split(' ')[0].trim();
+                    const separator = datePartOnly.includes('/') ? '/' : '-';
+                    const p = datePartOnly.split(separator);
+                    if (p.length < 3) return new Date(0);
+                    
+                    if (p[0].length === 4) { // YYYY-MM-DD
+                        const year = parseInt(p[0], 10) || 2026;
+                        const month = (parseInt(p[1], 10) - 1) || 0;
+                        const day = parseInt(p[2], 10) || 1;
+                        return new Date(year, month, day);
+                    } else { // DD/MM/YYYY
+                        const day = parseInt(p[0], 10) || 1;
+                        const month = (parseInt(p[1], 10) - 1) || 0;
+                        const year = parseInt(p[2], 10) || 2026;
+                        return new Date(year, month, day);
+                    }
+                } catch (err) {
+                    console.error("Error parseando fecha:", dStr, err);
+                    return new Date(0);
+                }
+            };
+
+            // Ordenamiento cronológico de las fechas con parser seguro y comparación robusta de milisegundos (.getTime())
+            const sortedDates = Object.keys(dateCounts)
+                .filter(d => d && (d.includes('/') || d.includes('-')))
+                .sort((a, b) => parseDate(a).getTime() - parseDate(b).getTime());
+
+            const cumulativeData = [];
+            let runningTotal = 0;
+            sortedDates.forEach(date => {
+                runningTotal += dateCounts[date];
+                cumulativeData.push(runningTotal);
+            });
+
+            // Salvaguarda si no hay datos de egresados aún
+            if (sortedDates.length === 0) {
+                sortedDates.push('10/06/2026');
+                cumulativeData.push(completed);
+            }
+
+            // Chart 2: Línea acumulativa temporal
+            const ctxLineEl = document.getElementById('timeline-line-chart');
+            if (ctxLineEl) {
+                if (timelineChartInstance) {
+                    timelineChartInstance.destroy();
+                }
+                const ctxLine = ctxLineEl.getContext('2d');
+                timelineChartInstance = new chartLoader(ctxLine, {
+                    type: 'line',
+                    data: {
+                        labels: sortedDates,
+                        datasets: [{
+                            label: 'Colaboradores Certificados (Acumulado)',
+                            data: cumulativeData,
+                            fill: true,
+                            backgroundColor: 'rgba(124, 58, 237, 0.08)',
+                            borderColor: '#7c3aed',
+                            borderWidth: 3,
+                            pointBackgroundColor: '#7c3aed',
+                            pointHoverRadius: 6,
+                            tension: 0.35
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0,
+                                    font: {
+                                        family: 'Plus Jakarta Sans',
+                                        size: 10
+                                    }
+                                },
+                                grid: {
+                                    color: '#f1f5f9'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    font: {
+                                        family: 'Plus Jakarta Sans',
+                                        size: 10
+                                    }
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function renderTable() {
+            const tableBody = document.getElementById('colaboradores-table-body');
+            tableBody.innerHTML = '';
+
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = startIndex + rowsPerPage;
+            const pageData = window.filteredDataset.slice(startIndex, endIndex);
+
+            if (pageData.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="11" class="py-12 text-center text-slate-400">
+                            <div class="space-y-2">
+                                <span class="text-3xl">🔍</span>
+                                <p class="text-sm font-semibold">No se encontraron resultados</p>
+                                <p class="text-xs">Prueba ajustando el buscador o la categoría seleccionada.</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                updatePaginationControls(0);
+                return;
+            }
+
+            pageData.forEach(item => {
+                const totalMod = item.modulos_completados;
+                const pct = Math.round((totalMod / 5) * 100);
+
+                const getModBadge = (status) => {
+                    if (String(status).trim().toLowerCase() === 'finalizado') {
+                        return `<span class="inline-flex h-5 w-5 rounded-full bg-emerald-100 text-emerald-800 items-center justify-center font-bold text-[10px]" title="Completado">✓</span>`;
+                    }
+                    return `<span class="inline-flex h-5 w-5 rounded-full bg-slate-100 text-slate-400 items-center justify-center font-bold text-[10px]" title="Pendiente">-</span>`;
+                };
+
+                const safeId = escapeHtml(item.id);
+                const safeNombre = escapeHtml(item.nombre);
+                const safeEmail = escapeHtml(item.email);
+                const safeFechaFin = escapeHtml(item.fecha_fin);
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100/50";
+                tr.innerHTML = `
+                    <td class="py-3 px-5 font-mono text-slate-500 font-bold">${safeId}</td>
+                    <td class="py-3 px-5 font-bold text-slate-900">${safeNombre}</td>
+                    <td class="py-3 px-5 text-slate-500 truncate max-w-xs">${safeEmail}</td>
+                    <td class="py-3 px-5 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <div class="w-12 bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                                <div class="h-1.5 rounded-full ${item.completado ? 'bg-emerald-500' : 'bg-brand-500'}" style="width: ${pct}%"></div>
+                            </div>
+                            <span class="font-bold text-slate-600">${pct}%</span>
+                        </div>
+                    </td>
+                    <td class="py-3 px-5 text-center">${getModBadge(item.m1)}</td>
+                    <td class="py-3 px-5 text-center">${getModBadge(item.m2)}</td>
+                    <td class="py-3 px-5 text-center">${getModBadge(item.m3)}</td>
+                    <td class="py-3 px-5 text-center">${getModBadge(item.m4)}</td>
+                    <td class="py-3 px-5 text-center">${getModBadge(item.m5)}</td>
+                    <td class="py-3 px-5 text-center">
+                        ${item.completado 
+                            ? `<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px]" title="${safeFechaFin}">Completado</span>`
+                            : `<span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-bold text-[10px]">En Curso</span>`
+                        }
+                    </td>
+                    <td class="py-3 px-5 text-right">
+                        <button onclick="openParticipantModal('${safeId}')" class="px-2.5 py-1.5 text-[11px] font-bold bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-600 rounded transition cursor-pointer font-medium">
+                            Ver Ficha
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+            updatePaginationControls(window.filteredDataset.length);
+        }
+
+        function updatePaginationControls(totalRows) {
+            const totalPages = Math.max(1, Math.ceil(totalRows / rowsPerPage));
+            
+            document.getElementById('table-row-count').innerText = `Mostrando ${Math.min(window.filteredDataset.length, (currentPage - 1) * rowsPerPage + 1)}-${Math.min(window.filteredDataset.length, currentPage * rowsPerPage)} de ${window.filteredDataset.length} registros`;
+            document.getElementById('table-page-indicator').innerText = `Página ${currentPage} de ${totalPages}`;
+            
+            document.getElementById('btn-prev-page').disabled = (currentPage === 1);
+            document.getElementById('btn-next-page').disabled = (currentPage === totalPages);
+        }
+
+        function prevPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                renderTable();
+            }
+        }
+
+        // Navegación hacia adelante
+        function nextPage() {
+            const totalPages = Math.ceil(window.filteredDataset.length / rowsPerPage);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderTable();
+            }
+        }
+
+        function filterTable() {
+            const searchQuery = document.getElementById('table-search-input').value.toLowerCase().trim();
+            const statusFilter = document.getElementById('table-filter-status').value;
+
+            window.filteredDataset = window.cleanDataset.filter(item => {
+                const matchesSearch = item.nombre.toLowerCase().includes(searchQuery) || item.email.toLowerCase().includes(searchQuery) || item.id.toString().includes(searchQuery);
+                
+                let matchesStatus = true;
+                if (statusFilter === 'finalizado') {
+                    matchesStatus = item.completado;
+                } else if (statusFilter === 'no-finalizado') {
+                    matchesStatus = !item.completado;
+                }
+
+                return matchesSearch && matchesStatus;
+            });
+
+            currentPage = 1;
+            renderTable();
+        }
+
+        function openParticipantModal(id) {
+            const user = window.cleanDataset.find(item => item.id.toString() === id.toString());
+            if (!user) return;
+
+            selectedParticipant = user;
+
+            document.getElementById('modal-participant-name').innerText = user.nombre;
+            document.getElementById('modal-participant-id').innerText = user.id;
+            document.getElementById('modal-participant-email').innerText = user.email;
+
+            const checklistContainer = document.getElementById('modal-modules-checklist');
+            checklistContainer.innerHTML = '';
+
+            const modules = [
+                { name: MODULE_NAMES[0], status: user.m1, date: user.m1_date },
+                { name: MODULE_NAMES[1], status: user.m2, date: user.m2_date },
+                { name: MODULE_NAMES[2], status: user.m3, date: user.m3_date },
+                { name: MODULE_NAMES[3], status: user.m4, date: user.m4_date },
+                { name: MODULE_NAMES[4], status: user.m5, date: user.m5_date }
+            ];
+
+            modules.forEach(m => {
+                const isCompleted = String(m.status).trim().toLowerCase() === 'finalizado';
+                const itemHtml = `
+                    <div class="flex items-start sm:items-center justify-between p-3 rounded-lg border ${isCompleted ? 'bg-emerald-50/50 border-emerald-100' : 'bg-slate-50 border-slate-100'} gap-2 text-xs">
+                        <div class="min-w-0">
+                            <p class="font-bold text-slate-800 truncate">${escapeHtml(m.name)}</p>
+                            ${isCompleted 
+                                ? `<p class="text-[10px] text-emerald-600 font-medium">Finalizado el: ${escapeHtml(m.date) || 'Sin fecha'}</p>` 
+                                : '<p class="text-[10px] text-slate-400 font-medium">Estado: Pendiente</p>'}
+                        </div>
+                        <span class="flex-shrink-0 px-2 py-0.5 rounded font-bold text-[9px] uppercase ${isCompleted ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-500'}">
+                            ${isCompleted ? 'Listo' : 'Pendiente'}
+                        </span>
+                    </div>
+                `;
+                checklistContainer.innerHTML += itemHtml;
+            });
+
+            document.getElementById('participant-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('participant-modal').classList.add('hidden');
+            selectedParticipant = null;
+        }
+
+        // Descarga de reporte en formato CSV del directorio actual
+        function exportFilteredData() {
+            if (window.filteredDataset.length === 0) return;
+
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+            csvContent += "ID,Nombre,Email,Progreso %,M1,M2,M3,M4,M5,Curso Finalizado,Fecha Finalizacion\n";
+
+            window.filteredDataset.forEach(item => {
+                const pct = Math.round((item.modulos_completados / 5) * 100);
+                const row = [
+                    item.id,
+                    `"${item.nombre}"`,
+                    item.email,
+                    `${pct}%`,
+                    item.m1,
+                    item.m2,
+                    item.m3,
+                    item.m4,
+                    item.m5,
+                    item.completado ? "Finalizado" : "No finalizado",
+                    item.fecha_fin || ""
+                ].join(",");
+                csvContent += row + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `reporte_igualdad_salarial_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Datos del CSV cargados por defecto de manera inicial
+        function loadDemoData(isSilent = false) {
+            const demoData = [
+                {
+                    "ID": "98509", "Nombre": "DAISY SIMBA", "Dirección de correo": "dsimba@ilsa.la",
+                    "Módulo 1: Género e inclusión laboral": "Finalizado", "Módulo 1: Género e inclusión laboral - Fecha de finalización": "18/05/2026 04:30",
+                    "Módulo 2: Equidad e igualdad de género en las organizaciones": "Finalizado", "Módulo 2: Equidad e igualdad de género en las organizaciones - Fecha de finalización": "18/05/2026 04:30",
+                    "Módulo 3: Derechos laborales de mujeres y hombres": "Finalizado", "Módulo 3: Derechos laborales de mujeres y hombres - Fecha de finalización": "18/05/2026 04:30",
+                    "Módulo 4:  Atención de denuncias por discriminación salarial": "Finalizado", "Módulo 4:  Atención de denuncias por discriminación salarial - Fecha de finalización": "18/05/2026 04:30",
+                    "Módulo 5:   Erradicar la violencia de género en las organizaciones": "Finalizado", "Módulo 5:   Erradicar la violencia de género en las organizaciones - Fecha de finalización": "18/05/2026 04:30",
+                    "Curso finalizado": "18/05/2026 04:30"
+                },
+                {
+                    "ID": "98510", "Nombre": "BYRON SIMBAÑA", "Dirección de correo": "byron_1994191@hotmail.com",
+                    "Módulo 1: Género e inclusión laboral": "Finalizado", "Módulo 1: Género e inclusión laboral - Fecha de finalización": "25/05/2026 17:40",
+                    "Módulo 2: Equidad e igualdad de género en las organizaciones": "Finalizado", "Módulo 2: Equidad e igualdad de género en las organizaciones - Fecha de finalización": "25/05/2026 17:27",
+                    "Módulo 3: Derechos laborales de mujeres y hombres": "Finalizado", "Módulo 3: Derechos laborales de mujeres y hombres - Fecha de finalización": "25/05/2026 16:57",
+                    "Módulo 4:  Atención de denuncias por discriminación salarial": "Finalizado", "Módulo 4:  Atención de denuncias por discriminación salarial - Fecha de finalización": "18/05/2026 04:30",
+                    "Módulo 5:   Erradicar la violencia de género en las organizaciones": "Finalizado", "Módulo 5:   Erradicar la violencia de género en las organizaciones - Fecha de finalización": "25/05/2026 17:35",
+                    "Curso finalizado": "25/05/2026 17:40"
+                },
+                {
+                    "ID": "98526", "Nombre": "BRYAN SIMBAÑA", "Dirección de correo": "bsimbana@grafandina.com",
+                    "Módulo 1: Género e inclusión laboral": "Finalizado", "Módulo 1: Género e inclusión laboral - Fecha de finalización": "10/06/2026 12:28",
+                    "Módulo 2: Equidad e igualdad de género en las organizaciones": "Finalizado", "Módulo 2: Equidad e igualdad de género en las organizaciones - Fecha de finalización": "10/06/2026 12:19",
+                    "Módulo 3: Derechos laborales de mujeres y hombres": "Finalizado", "Módulo 3: Derechos laborales de mujeres y hombres - Fecha de finalización": "10/06/2026 12:07",
+                    "Módulo 4:  Atención de denuncias por discriminación salarial": "Finalizado", "Módulo 4:  Atención de denuncias por discriminación salarial - Fecha de finalización": "10/06/2026 11:58",
+                    "Módulo 5:   Erradicar la violencia de género en las organizaciones": "Finalizado", "Módulo 5:   Erradicar la violencia de género en las organizaciones - Fecha de finalización": "10/06/2026 12:28",
+                    "Curso finalizado": "10/06/2026 12:28"
+                },
+                {
+                    "ID": "98516", "Nombre": "CHRISTIAN AYALA", "Dirección de correo": "chayala@grafandina.com",
+                    "Módulo 1: Género e inclusión laboral": "No finalizado", "Módulo 1: Género e inclusión laboral - Fecha de finalización": "",
+                    "Módulo 2: Equidad e igualdad de género en las organizaciones": "No finalizado", "Módulo 2: Equidad e igualdad de género en las organizaciones - Fecha de finalización": "",
+                    "Módulo 3: Derechos laborales de mujeres y hombres": "No finalizado", "Módulo 3: Derechos laborales de mujeres y hombres - Fecha de finalización": "",
+                    "Módulo 4:  Atención de denuncias por discriminación salarial": "No finalizado", "Módulo 4:  Atención de denuncias por discriminación salarial - Fecha de finalización": "",
+                    "Módulo 5:   Erradicar la violencia de género en las organizaciones": "No finalizado", "Módulo 5:   Erradicar la violencia de género en las organizaciones - Fecha de finalización": "",
+                    "Curso finalizado": "No finalizado"
+                },
+                {
+                    "ID": "98517", "Nombre": "JUAN CARLOS BRITO", "Dirección de correo": "jbrito@grafandina.com",
+                    "Módulo 1: Género e inclusión laboral": "No finalizado", "Módulo 1: Género e inclusión laboral - Fecha de finalización": "",
+                    "Módulo 2: Equidad e igualdad de género en las organizaciones": "No finalizado", "Módulo 2: Equidad e igualdad de género en las organizaciones - Fecha de finalización": "",
+                    "Módulo 3: Derechos laborales de mujeres y hombres": "No finalizado", "Módulo 3: Derechos laborales de mujeres y hombres - Fecha de finalización": "",
+                    "Módulo 4:  Atención de denuncias por discriminación salarial": "No finalizado", "Módulo 4:  Atención de denuncias por discriminación salarial - Fecha de finalización": "",
+                    "Módulo 5:   Erradicar la violencia de género en las organizaciones": "No finalizado", "Módulo 5:   Erradicar la violencia de género en las organizaciones - Fecha de finalización": "",
+                    "Curso finalizado": "No finalizado"
+                },
+                {
+                    "ID": "98518", "Nombre": "MARIELA CARRION", "Dirección de correo": "mcarrion@grafandina.com",
+                    "Módulo 1: Género e inclusión laboral": "No finalizado", "Módulo 1: Género e inclusión laboral - Fecha de finalización": "",
+                    "Módulo 2: Equidad e igualdad de género en las organizaciones": "No finalizado", "Módulo 2: Equidad e igualdad de género en las organizaciones - Fecha de finalización": "",
+                    "Módulo 3: Derechos laborales de mujeres y hombres": "No finalizado", "Módulo 3: Derechos laborales de mujeres y hombres - Fecha de finalización": "",
+                    "Módulo 4:  Atención de denuncias por discriminación salarial": "No finalizado", "Módulo 4:  Atención de denuncias por discriminación salarial - Fecha de finalización": "",
+                    "Módulo 5:   Erradicar la violencia de género en las organizaciones": "No finalizado", "Módulo 5:   Erradicar la violencia de género en las organizaciones - Fecha de finalización": "",
+                    "Curso finalizado": "No finalizado"
+                },
+                {
+                    "ID": "98519", "Nombre": "GABRIELA CHAMBA", "Dirección de correo": "gchamba@grafandina.com",
+                    "Módulo 1: Género e inclusión laboral": "No finalizado", "Módulo 1: Género e inclusión laboral - Fecha de finalización": "",
+                    "Módulo 2: Equidad e igualdad de género en las organizaciones": "No finalizado", "Módulo 2: Equidad e igualdad de género en las organizaciones - Fecha de finalización": "",
+                    "Módulo 3: Derechos laborales de mujeres y hombres": "No finalizado", "Módulo 3: Derechos laborales de mujeres y hombres - Fecha de finalización": "",
+                    "Módulo 4:  Atención de denuncias por discriminación salarial": "No finalizado", "Módulo 4:  Atención de denuncias por discriminación salarial - Fecha de finalización": "",
+                    "Módulo 5:   Erradicar la violencia de género en las organizaciones": "No finalizado", "Módulo 5:   Erradicar la violencia de género en las organizaciones - Fecha de finalización": "",
+                    "Curso finalizado": "No finalizado"
+                }
+            ];
+
+            const defaultDate = "10 de junio de 2026";
+            processUploadedData(demoData, defaultDate);
+        }
+
+        // Sistema fluido de notificaciones Toast
+        function showNotification(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container') || createToastContainer();
+            
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-3 p-4 rounded-xl shadow-lg border text-xs font-semibold transform translate-y-4 opacity-0 transition-all duration-300 max-w-sm ${
+                type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+                type === 'error' ? 'bg-rose-50 border-rose-200 text-rose-800' :
+                'bg-blue-50 border-blue-200 text-blue-800'
+            }`;
+            
+            const icon = type === 'success' ? '✓' : type === 'error' ? '⚠' : 'ℹ';
+            
+            toast.innerHTML = `
+                <span class="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                    type === 'success' ? 'bg-emerald-500 text-white' :
+                    type === 'error' ? 'bg-rose-500 text-white' :
+                    'bg-blue-500 text-white'
+                }">${icon}</span>
+                <p class="flex-1">${escapeHtml(message)}</p>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-4', 'opacity-0');
+            }, 10);
+            
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 4000);
+        }
+
+        function createToastContainer() {
+            const container = document.createElement('div');
+            container.id = 'toast-container';
+            container.className = 'fixed bottom-5 right-5 z-[100] flex flex-col gap-2';
+            document.body.appendChild(container);
+            return container;
+        }
+
+        // Exponer funciones globales requeridas por elementos HTML de forma síncrona
+        window.prevPage = prevPage;
+        window.nextPage = nextPage;
+        window.filterTable = filterTable;
+        window.openParticipantModal = openParticipantModal;
+        window.closeModal = closeModal;
+        window.exportFilteredData = exportFilteredData;
+
+        // Wrapper inicial con control de cargador garantizado
+        async function runInitialization() {
+            try {
+                await fetchCSVFromGitHub();
+            } catch (err) {
+                console.error("Excepción crítica en carga asíncrona inicial:", err);
+                loadDemoData(true);
+            } finally {
+                // Se ejecuta sin importar fallos de red o de parseo para ocultar el loader
+                hideGlobalLoader();
+            }
+        }
+
+        // Iniciar la carga al levantar el DOM
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            runInitialization();
+        } else {
+            window.addEventListener('DOMContentLoaded', runInitialization);
+        }
+
+    </script>
+</body>
+</html>
