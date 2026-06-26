@@ -1141,14 +1141,16 @@ function applyGlobalFilters() {
     window.filteredDataset = window.cleanDataset.filter(item => {
         // Filtro por búsqueda (nombre, email, id)
         const matchesSearch =
-            item.nombre.toLowerCase().includes(searchQuery) ||
-            item.email.toLowerCase().includes(searchQuery) ||
-            item.id.toString().includes(searchQuery);
+            String(item.nombre || '').toLowerCase().includes(searchQuery) ||
+            String(item.email || '').toLowerCase().includes(searchQuery) ||
+            String(item.id || '').toString().includes(searchQuery);
 
         // Filtro por grupo (global)
         let matchesGroup = true;
         if (groupFilter && groupFilter !== 'todos') {
-            matchesGroup = String(item.grupo || '').trim() === groupFilter;
+            const itemGrupo = String(item.grupo || '').trim().toLowerCase();
+            const filtroGrupo = String(groupFilter).trim().toLowerCase();
+            matchesGroup = itemGrupo === filtroGrupo;
         }
 
         return matchesSearch && matchesGroup;
@@ -1157,12 +1159,14 @@ function applyGlobalFilters() {
     // Reiniciar página
     currentPage = 1;
 
-    // Re-renderizar TODO excepto el filtro de estado
+    // Re-renderizar TODO el dashboard (base = filteredDataset)
     renderKPIs();
     renderCharts();
     renderModuleBreakdown();
     renderDomainBreakdown();
-    renderTable();
+
+    // Aplicar inmediatamente el filtro de estado sobre lo nuevo
+    filterTable();
 }
 
 function filterTable() {
