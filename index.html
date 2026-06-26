@@ -138,6 +138,20 @@
         <!-- Dashboard Analytics -->
         <div id="dashboard-content" class="space-y-6">
             
+         
+         <!-- Filtro global por Grupo -->
+    <div class="flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <label for="table-filter-group" class="text-xs font-semibold text-slate-600">
+                Grupo:
+            </label>
+            <select id="table-filter-group" onchange="filterTable()" class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-600 font-medium focus:ring-2 focus:ring-brand-500 transition outline-none">
+                <option value="todos">Todos los Grupos</option>
+                <!-- Opciones dinámicas se generan desde JS -->
+            </select>
+        </div>
+    </div>
+
             <!-- KPIs Principales -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                 <!-- Tarjeta 1: Total Participantes -->
@@ -726,6 +740,13 @@ async function fetchCSVFromGitHub() {
 
             window.cleanDataset.sort((a, b) => a.nombre.localeCompare(b.nombre));
             window.filteredDataset = [...window.cleanDataset];
+
+            populateGroupFilter();
+renderKPIs();
+renderCharts();
+renderModuleBreakdown();
+renderDomainBreakdown();
+renderTable();
             currentPage = 1;
 
             document.getElementById('cutoff-date-badge').innerText = cutoffDateValue;
@@ -741,8 +762,8 @@ async function fetchCSVFromGitHub() {
 
         // Renderizadores de Datos
         function renderKPIs() {
-            const total = window.cleanDataset.length;
-            const completed = window.cleanDataset.filter(item => item.completado).length;
+            const total = window.filteredDataset.length;
+            const completed = window.filteredDataset.filter(item => item.completado).length;
             const pending = total - completed;
             const rate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
@@ -756,11 +777,11 @@ async function fetchCSVFromGitHub() {
         function renderModuleBreakdown() {
             const container = document.getElementById('module-progress-bars');
             container.innerHTML = '';
-            const totalParticipants = window.cleanDataset.length;
+            const totalParticipants = window.filteredDataset.length;
 
             MODULE_NAMES.forEach((modName, idx) => {
                 const cleanKey = `m${idx + 1}`;
-                const completedCount = window.cleanDataset.filter(item => String(item[cleanKey]).toLowerCase() === 'finalizado').length;
+                const completedCount = window.filteredDataset.filter(item => String(item[cleanKey]).toLowerCase() === 'finalizado').length;
                 const percentage = totalParticipants > 0 ? Math.round((completedCount / totalParticipants) * 100) : 0;
 
                 const colors = ['from-purple-500 to-indigo-500', 'from-blue-500 to-cyan-500', 'from-emerald-500 to-teal-500', 'from-amber-500 to-orange-500', 'from-rose-500 to-pink-500'];
@@ -786,7 +807,7 @@ async function fetchCSVFromGitHub() {
             domainList.innerHTML = '';
 
             const domains = {};
-            window.cleanDataset.forEach(item => {
+            window.filteredDataset.forEach(item => {
                 const parts = item.email.split('@');
                 const domain = parts.length > 1 ? parts[1].toLowerCase() : 'otros';
                 if (!domains[domain]) {
@@ -824,8 +845,8 @@ async function fetchCSVFromGitHub() {
         }
 
         function renderCharts() {
-            const total = window.cleanDataset.length;
-            const completed = window.cleanDataset.filter(item => item.completado).length;
+            const total = window.filteredDataset.length;
+            const completed = window.filteredDataset.filter(item => item.completado).length;
             const pending = total - completed;
 
             const chartLoader = window.Chart;
@@ -1140,6 +1161,11 @@ function filterTable() {
     });
 
     currentPage = 1;
+// Re-renderizar TODO el dashboard con el dataset filtrado
+    renderKPIs();
+    renderCharts();
+    renderModuleBreakdown();
+    renderDomainBreakdown();
     renderTable();
 }
 
