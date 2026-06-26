@@ -732,18 +732,43 @@ async function fetchCSVFromGitHub() {
                 };
             });
 
-           window.cleanDataset.sort((a, b) => a.nombre.localeCompare(b.nombre));
-window.filteredDataset = [...window.cleanDataset];
-currentPage = 1;
+            return {
+                id: idVal,
+                nombre: nombreVal,
+                grupo: grupoVal,
+                email: emailVal,
+                m1: m1_val || 'No finalizado',
+                m1_date: m1_date || '',
+                m2: m2_val || 'No finalizado',
+                m2_date: m2_date || '',
+                m3: m3_val || 'No finalizado',
+                m3_date: m3_date || '',
+                m4: m4_val || 'No finalizado',
+                m4_date: m4_date || '',
+                m5: m5_val || 'No finalizado',
+                m5_date: m5_date || '',
+                completado: isCourseDone,
+                modulos_completados: completedCount,
+                fecha_fin: globalCompletionDate
+            };
+        });
 
-document.getElementById('cutoff-date-badge').innerText = cutoffDateValue;
-document.getElementById('dashboard-content').classList.remove('hidden');
+        // Ordenar por nombre
+        window.cleanDataset.sort((a, b) => a.nombre.localeCompare(b.nombre));
+        // Inicializar dataset filtrado globalmente con todos los registros
+        window.filteredDataset = [...window.cleanDataset];
+        currentPage = 1;
 
-// Rellenar opciones del filtro de grupo en base a los datos cargados
-populateGroupFilter();
+        // Actualizar fecha de corte y mostrar el dashboard
+        document.getElementById('cutoff-date-badge').innerText = cutoffDateValue;
+        document.getElementById('dashboard-content').classList.remove('hidden');
 
-// Aplicar filtros globales (búsqueda + grupo) y renderizar TODO el dashboard
-applyGlobalFilters();
+        // Poblar el filtro de grupo con los datos ya cargados
+        populateGroupFilter();
+
+        // Aplicar filtros globales (búsqueda + grupo) y desde ahí recalcular KPIs, gráficos y tabla
+        applyGlobalFilters();
+    }
 
         // Renderizadores de Datos
         function renderKPIs() {
@@ -1014,14 +1039,16 @@ function populateGroupFilter() {
 }
 
 
-        function renderTable() {
+function renderTable() {
     const tableBody = document.getElementById('colaboradores-table-body');
+    if (!tableBody) return;
+
     tableBody.innerHTML = '';
 
-    // Usar el dataset filtrado por estado si existe,
-    // de lo contrario usar el dataset filtrado globalmente.
-    const baseData = window.tableStatusFilteredDataset || window.filteredDataset;
-
+    // Dataset base para la tabla: filtrado por estado (si existe) o filtrado global.
+    const baseData = window.tableStatusFilteredDataset || window.filteredDataset || [];
+    
+    const totalRows = baseData.length;
     const startIndex = (currentPage - 1) * rowsPerPage;
     const endIndex = startIndex + rowsPerPage;
     const pageData = baseData.slice(startIndex, endIndex);
@@ -1029,7 +1056,7 @@ function populateGroupFilter() {
     if (pageData.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="11" class="py-12 text-center text-slate-400">
+                <td colspan="12" class="py-12 text-center text-slate-400">
                     <div class="space-y-2">
                         <span class="text-3xl">🔍</span>
                         <p class="text-sm font-semibold">No se encontraron resultados</p>
@@ -1042,9 +1069,60 @@ function populateGroupFilter() {
         return;
     }
 
-    // ... (resto de construcción de filas igual, usando pageData)
+    pageData.forEach(item => {
+        const safeId = escapeHtml(item.id);
+        const safeNombre = escapeHtml(item.nombre);
+        const safeGrupo = escapeHtml(item.grupo);
+        const safeEmail = escapeHtml(item.email);
+        const safeFechaFin = escapeHtml(item.fecha_fin);
 
-    updatePaginationControls(baseData.length);
+        const pct = Math.round((item.modulos_completados / 5) * 100);
+        const isCompleted = item.completado;
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50/80 transition";
+
+        tr.innerHTML = `
+            <td class="py-3 px-5 text-[11px] text-slate-400 font-mono">${safeId}</td>
+            <td class="py-3 px-5 font-bold text-slate-900">${safeNombre}</td>
+            <td class="py-3 px-5 text-slate-600">${safeGrupo}</td>
+            <td class="py-3 px-5 text-slate-500 truncate max-w-xs">${safeEmail}</td>
+            <td class="py-3 px-5 text-center">
+                <div class="inline-flex items-center gap-2">
+                    <span class="text-[11px] font-semibold ${isCompleted ? 'text-emerald-600' : 'text-amber-500'}">${pct}%</span>
+                    <div class="w-24 bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div class="${isCompleted ? 'bg-emerald-500' : 'bg-amber-400'} h-1.5 rounded-full" style="width: ${pct}%;"></div>
+                    </div>
+                </div>
+            </td>
+            <td class="py-3 px-5 text-center text-[11px] ${String(item.m1).toLowerCase() === 'finalizado' ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">${escapeHtml(item.m1)}</td>
+            <td class="py-3 px-5 text-center text-[11px] ${String(item.m2).toLowerCase() === 'finalizado' ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">${escapeHtml(item.m2)}</td>
+            <td class="py-3 px-5 text-center text-[11px] ${String(item.m3).toLowerCase() === 'finalizado' ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">${escapeHtml(item.m3)}</td>
+            <td class="py-3 px-5 text-center text-[11px] ${String(item.m4).toLowerCase() === 'finalizado' ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">${escapeHtml(item.m4)}</td>
+            <td class="py-3 px-5 text-center text-[11px] ${String(item.m5).toLowerCase() === 'finalizado' ? 'text-emerald-600 font-semibold' : 'text-slate-400'}">${escapeHtml(item.m5)}</td>
+            <td class="py-3 px-5 text-center">
+                <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-full text-[11px] font-semibold ${
+                    isCompleted ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
+                }">
+                    ${isCompleted ? 'Finalizado' : 'En Progreso'}
+                </span>
+                <p class="text-[10px] text-slate-400 mt-1">${safeFechaFin || ''}</p>
+            </td>
+            <td class="py-3 px-5 text-right">
+                <button onclick="openParticipantModal('${safeId}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-semibold border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Ver detalle
+                </button>
+            </td>
+        `;
+
+        tableBody.appendChild(tr);
+    });
+
+    updatePaginationControls(totalRows);
 }
 
        function updatePaginationControls(totalRows) {
@@ -1066,13 +1144,14 @@ function populateGroupFilter() {
         }
 
         // Navegación hacia adelante
-        function nextPage() {
-            const totalPages = Math.ceil(window.filteredDataset.length / rowsPerPage);
-            if (currentPage < totalPages) {
-                currentPage++;
-                renderTable();
-            }
-        }
+ function nextPage() {
+    const baseData = window.tableStatusFilteredDataset || window.filteredDataset || [];
+    const totalPages = Math.max(1, Math.ceil(baseData.length / rowsPerPage));
+    if (currentPage < totalPages) {
+        currentPage++;
+        renderTable();
+    }
+}
 function applyGlobalFilters() {
     const searchQueryEl = document.getElementById('table-search-input');
     const groupFilterEl = document.getElementById('table-filter-group');
