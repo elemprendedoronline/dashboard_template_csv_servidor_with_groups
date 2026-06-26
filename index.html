@@ -317,6 +317,7 @@
                             <tr class="bg-slate-100/50 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
                                 <th class="py-3 px-5">ID</th>
                                 <th class="py-3 px-5">Nombre Completo</th>
+                                <th class="py-3 px-5">Grupo</th>
                                 <th class="py-3 px-5">Dirección de Correo</th>
                                 <th class="py-3 px-5 text-center">Progreso</th>
                                 <th class="py-3 px-5 text-center">M1</th>
@@ -371,7 +372,7 @@
             </div>
 
             <div class="p-6 overflow-y-auto flex-1 space-y-6">
-                <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200/50">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200/50">
                     <div>
                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">ID del usuario</p>
                         <p class="text-sm font-semibold text-slate-800" id="modal-participant-id">-</p>
@@ -380,6 +381,10 @@
                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Dirección de Correo</p>
                         <p class="text-sm font-semibold text-slate-800 break-words" id="modal-participant-email">-</p>
                     </div>
+                    <div>
+    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Grupo</p>
+    <p class="text-sm font-semibold text-slate-800 break-words" id="modal-participant-group">-</p>
+</div>
                 </div>
 
                 <div class="space-y-3">
@@ -535,7 +540,7 @@
 // Sincronización Automática con Taltura (CSV externo)
 async function fetchCSVFromGitHub() {
     // URL del CSV generado por Moodle/Taltura
-    const CSV_URL = 'https://taltura.org/recursos/dashboards_Igualdad_Salarial/dashboard.csv';
+    const CSV_URL = 'https://taltura.org/recursos/dashboards_Igualdad_Salarial/dashboard_with_groups.csv';
 
     let response = null;
 
@@ -680,6 +685,13 @@ async function fetchCSVFromGitHub() {
                     }
                 }
 
+                const grupoVal =
+    getRowValueByLooseKey(item, 'nombre de grupo') ||
+    getRowValueByLooseKey(item, 'grupo') ||
+    getRowValueByLooseKey(item, 'group name') ||
+    getRowValueByLooseKey(item, 'grupo_nombre') ||
+    'Sin grupo';
+
                 const idVal = getRowValueByLooseKey(item, 'id') || getRowValueByLooseKey(item, 'numero de id') || Math.random().toString(36).substr(2, 9);
                 const nombreVal = getRowValueByLooseKey(item, 'nombre') || 'Colaborador Sin Nombre';
                 const emailVal = getRowValueByLooseKey(item, 'direccion de correo') || getRowValueByLooseKey(item, 'correo') || getRowValueByLooseKey(item, 'email') || 'sin-correo@ilsa.la';
@@ -687,6 +699,7 @@ async function fetchCSVFromGitHub() {
                 return {
                     id: idVal,
                     nombre: nombreVal,
+                    grupo: grupoVal,
                     email: emailVal,
                     m1: m1_val || 'No finalizado',
                     m1_date: m1_date || '',
@@ -998,6 +1011,7 @@ async function fetchCSVFromGitHub() {
 
                 const safeId = escapeHtml(item.id);
                 const safeNombre = escapeHtml(item.nombre);
+                const safeGrupo = escapeHtml(item.grupo);
                 const safeEmail = escapeHtml(item.email);
                 const safeFechaFin = escapeHtml(item.fecha_fin);
 
@@ -1006,6 +1020,7 @@ async function fetchCSVFromGitHub() {
                 tr.innerHTML = `
                     <td class="py-3 px-5 font-mono text-slate-500 font-bold">${safeId}</td>
                     <td class="py-3 px-5 font-bold text-slate-900">${safeNombre}</td>
+                    <td class="py-3 px-5 text-slate-600">${safeGrupo}</td>
                     <td class="py-3 px-5 text-slate-500 truncate max-w-xs">${safeEmail}</td>
                     <td class="py-3 px-5 text-center">
                         <div class="flex items-center justify-center gap-2">
@@ -1093,6 +1108,7 @@ async function fetchCSVFromGitHub() {
 
             document.getElementById('modal-participant-name').innerText = user.nombre;
             document.getElementById('modal-participant-id').innerText = user.id;
+            document.getElementById('modal-participant-group').innerText = user.grupo || 'Sin grupo';
             document.getElementById('modal-participant-email').innerText = user.email;
 
             const checklistContainer = document.getElementById('modal-modules-checklist');
@@ -1170,7 +1186,7 @@ async function fetchCSVFromGitHub() {
         function loadDemoData(isSilent = false) {
             const demoData = [
                 {
-                    "ID": "98509", "Nombre": "DAISY SIMBA", "Dirección de correo": "dsimba@ilsa.la",
+                    "ID": "98509", "Nombre": "DAISY SIMBA", "Grupo": "Talento Humano", "Dirección de correo": "dsimba@ilsa.la",
                     "Módulo 1: Género e inclusión laboral": "Finalizado", "Módulo 1: Género e inclusión laboral - Fecha de finalización": "18/05/2026 04:30",
                     "Módulo 2: Equidad e igualdad de género en las organizaciones": "Finalizado", "Módulo 2: Equidad e igualdad de género en las organizaciones - Fecha de finalización": "18/05/2026 04:30",
                     "Módulo 3: Derechos laborales de mujeres y hombres": "Finalizado", "Módulo 3: Derechos laborales de mujeres y hombres - Fecha de finalización": "18/05/2026 04:30",
@@ -1179,7 +1195,7 @@ async function fetchCSVFromGitHub() {
                     "Curso finalizado": "18/05/2026 04:30"
                 },
                 {
-                    "ID": "98510", "Nombre": "BYRON SIMBAÑA", "Dirección de correo": "byron_1994191@hotmail.com",
+                    "ID": "98510", "Nombre": "BYRON SIMBAÑA", "Grupo": "Talento Humano", "Dirección de correo": "byron_1994191@hotmail.com",
                     "Módulo 1: Género e inclusión laboral": "Finalizado", "Módulo 1: Género e inclusión laboral - Fecha de finalización": "25/05/2026 17:40",
                     "Módulo 2: Equidad e igualdad de género en las organizaciones": "Finalizado", "Módulo 2: Equidad e igualdad de género en las organizaciones - Fecha de finalización": "25/05/2026 17:27",
                     "Módulo 3: Derechos laborales de mujeres y hombres": "Finalizado", "Módulo 3: Derechos laborales de mujeres y hombres - Fecha de finalización": "25/05/2026 16:57",
@@ -1188,7 +1204,7 @@ async function fetchCSVFromGitHub() {
                     "Curso finalizado": "25/05/2026 17:40"
                 },
                 {
-                    "ID": "98526", "Nombre": "BRYAN SIMBAÑA", "Dirección de correo": "bsimbana@grafandina.com",
+                    "ID": "98526", "Nombre": "BRYAN SIMBAÑA", "Grupo": "Talento Humano", "Dirección de correo": "bsimbana@grafandina.com",
                     "Módulo 1: Género e inclusión laboral": "Finalizado", "Módulo 1: Género e inclusión laboral - Fecha de finalización": "10/06/2026 12:28",
                     "Módulo 2: Equidad e igualdad de género en las organizaciones": "Finalizado", "Módulo 2: Equidad e igualdad de género en las organizaciones - Fecha de finalización": "10/06/2026 12:19",
                     "Módulo 3: Derechos laborales de mujeres y hombres": "Finalizado", "Módulo 3: Derechos laborales de mujeres y hombres - Fecha de finalización": "10/06/2026 12:07",
@@ -1197,7 +1213,7 @@ async function fetchCSVFromGitHub() {
                     "Curso finalizado": "10/06/2026 12:28"
                 },
                 {
-                    "ID": "98516", "Nombre": "CHRISTIAN AYALA", "Dirección de correo": "chayala@grafandina.com",
+                    "ID": "98516", "Nombre": "CHRISTIAN AYALA", "Grupo": "Talento Humano", "Dirección de correo": "chayala@grafandina.com",
                     "Módulo 1: Género e inclusión laboral": "No finalizado", "Módulo 1: Género e inclusión laboral - Fecha de finalización": "",
                     "Módulo 2: Equidad e igualdad de género en las organizaciones": "No finalizado", "Módulo 2: Equidad e igualdad de género en las organizaciones - Fecha de finalización": "",
                     "Módulo 3: Derechos laborales de mujeres y hombres": "No finalizado", "Módulo 3: Derechos laborales de mujeres y hombres - Fecha de finalización": "",
@@ -1206,7 +1222,7 @@ async function fetchCSVFromGitHub() {
                     "Curso finalizado": "No finalizado"
                 },
                 {
-                    "ID": "98517", "Nombre": "JUAN CARLOS BRITO", "Dirección de correo": "jbrito@grafandina.com",
+                    "ID": "98517", "Nombre": "JUAN CARLOS BRITO", "Grupo": "Comercial", "Dirección de correo": "jbrito@grafandina.com",
                     "Módulo 1: Género e inclusión laboral": "No finalizado", "Módulo 1: Género e inclusión laboral - Fecha de finalización": "",
                     "Módulo 2: Equidad e igualdad de género en las organizaciones": "No finalizado", "Módulo 2: Equidad e igualdad de género en las organizaciones - Fecha de finalización": "",
                     "Módulo 3: Derechos laborales de mujeres y hombres": "No finalizado", "Módulo 3: Derechos laborales de mujeres y hombres - Fecha de finalización": "",
@@ -1215,7 +1231,7 @@ async function fetchCSVFromGitHub() {
                     "Curso finalizado": "No finalizado"
                 },
                 {
-                    "ID": "98518", "Nombre": "MARIELA CARRION", "Dirección de correo": "mcarrion@grafandina.com",
+                    "ID": "98518", "Nombre": "MARIELA CARRION", "Grupo": "Comercial", "Dirección de correo": "mcarrion@grafandina.com",
                     "Módulo 1: Género e inclusión laboral": "No finalizado", "Módulo 1: Género e inclusión laboral - Fecha de finalización": "",
                     "Módulo 2: Equidad e igualdad de género en las organizaciones": "No finalizado", "Módulo 2: Equidad e igualdad de género en las organizaciones - Fecha de finalización": "",
                     "Módulo 3: Derechos laborales de mujeres y hombres": "No finalizado", "Módulo 3: Derechos laborales de mujeres y hombres - Fecha de finalización": "",
@@ -1224,7 +1240,7 @@ async function fetchCSVFromGitHub() {
                     "Curso finalizado": "No finalizado"
                 },
                 {
-                    "ID": "98519", "Nombre": "GABRIELA CHAMBA", "Dirección de correo": "gchamba@grafandina.com",
+                    "ID": "98519", "Nombre": "GABRIELA CHAMBA", "Grupo": "Comercial", "Dirección de correo": "gchamba@grafandina.com",
                     "Módulo 1: Género e inclusión laboral": "No finalizado", "Módulo 1: Género e inclusión laboral - Fecha de finalización": "",
                     "Módulo 2: Equidad e igualdad de género en las organizaciones": "No finalizado", "Módulo 2: Equidad e igualdad de género en las organizaciones - Fecha de finalización": "",
                     "Módulo 3: Derechos laborales de mujeres y hombres": "No finalizado", "Módulo 3: Derechos laborales de mujeres y hombres - Fecha de finalización": "",
