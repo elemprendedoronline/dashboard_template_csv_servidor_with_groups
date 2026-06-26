@@ -86,7 +86,7 @@
             <div class="w-12 h-12 border-4 border-brand-200 border-t-brand-600 rounded-full animate-spin"></div>
             <div>
  <p class="font-bold text-slate-900 text-sm">Sincronizando con Taltura</p>
-<p class="text-xs text-slate-500 mt-1">Obteniendo archivo de datos 'dashboard.csv' desde Taltura y renderizando métricas...</p>            </div>
+<p class="text-xs text-slate-500 mt-1">Obteniendo archivo de datos 'dashboard_with_groups.csv' desde Taltura y renderizando métricas...</p>            </div>
         </div>
     </div>
 
@@ -585,7 +585,7 @@ async function fetchCSVFromGitHub() {
         }
 
         if (!response || !response.ok) {
-            console.warn("No se pudo obtener 'dashboard.csv' desde Taltura. Usando datos muestra.");
+            console.warn("No se pudo obtener 'dashboard_with_groups.csv' desde Taltura. Usando datos muestra.");
             document.getElementById('github-sync-banner').classList.remove('hidden');
             loadDemoData(true);
             return;
@@ -682,78 +682,74 @@ async function fetchCSVFromGitHub() {
                     }
                 });
 
-                // Curso finalizado
-                const cursoFinVal = getRowValueByLooseKey(item, "Curso finalizado");
-                const isCourseDone = (completedCount === 5 || cursoFinVal.toLowerCase() === 'finalizado' || !!cursoFinVal.match(/\d+/));
-                
-                let globalCompletionDate = "";
-                if (isCourseDone) {
-                    if (cursoFinVal && cursoFinVal.match(/\d+/)) {
-                        globalCompletionDate = cursoFinVal;
-                    } else {
-                        const dates = [m1_date, m2_date, m3_date, m4_date, m5_date].filter(d => d);
-                        if (dates.length > 0) {
-                            globalCompletionDate = dates[dates.length - 1];
-                        } else {
-                            globalCompletionDate = "10/06/2026 12:28";
-                        }
-                    }
-                }
+ // Curso finalizado
+const cursoFinVal = getRowValueByLooseKey(item, "Curso finalizado");
+const isCourseDone = (completedCount === 5 || cursoFinVal.toLowerCase() === 'finalizado' || !!cursoFinVal.match(/\d+/));
 
-                const grupoVal =
+let globalCompletionDate = "";
+if (isCourseDone) {
+    if (cursoFinVal && cursoFinVal.match(/\d+/)) {
+        globalCompletionDate = cursoFinVal;
+    } else {
+        const dates = [m1_date, m2_date, m3_date, m4_date, m5_date].filter(d => d);
+        if (dates.length > 0) {
+            globalCompletionDate = dates[dates.length - 1];
+        } else {
+            globalCompletionDate = "10/06/2026 12:28";
+        }
+    }
+}
+
+const grupoVal =
     getRowValueByLooseKey(item, 'nombre de grupo') ||
     getRowValueByLooseKey(item, 'grupo') ||
     getRowValueByLooseKey(item, 'group name') ||
     getRowValueByLooseKey(item, 'grupo_nombre') ||
     'Sin grupo';
 
-                const idVal = getRowValueByLooseKey(item, 'id') || getRowValueByLooseKey(item, 'numero de id') || Math.random().toString(36).substr(2, 9);
-                const nombreVal = getRowValueByLooseKey(item, 'nombre') || 'Colaborador Sin Nombre';
-                const emailVal = getRowValueByLooseKey(item, 'direccion de correo') || getRowValueByLooseKey(item, 'correo') || getRowValueByLooseKey(item, 'email') || 'sin-correo@ilsa.la';
+const idVal = getRowValueByLooseKey(item, 'id') || getRowValueByLooseKey(item, 'numero de id') || Math.random().toString(36).substr(2, 9);
+const nombreVal = getRowValueByLooseKey(item, 'nombre') || 'Colaborador Sin Nombre';
+const emailVal = getRowValueByLooseKey(item, 'direccion de correo') || getRowValueByLooseKey(item, 'correo') || getRowValueByLooseKey(item, 'email') || 'sin-correo@ilsa.la';
 
-                return {
-                    id: idVal,
-                    nombre: nombreVal,
-                    grupo: grupoVal,
-                    email: emailVal,
-                    m1: m1_val || 'No finalizado',
-                    m1_date: m1_date || '',
-                    m2: m2_val || 'No finalizado',
-                    m2_date: m2_date || '',
-                    m3: m3_val || 'No finalizado',
-                    m3_date: m3_date || '',
-                    m4: m4_val || 'No finalizado',
-                    m4_date: m4_date || '',
-                    m5: m5_val || 'No finalizado',
-                    m5_date: m5_date || '',
-                    completado: isCourseDone,
-                    modulos_completados: completedCount,
-                    fecha_fin: globalCompletionDate
-                };
-            });
+return {
+    id: idVal,
+    nombre: nombreVal,
+    grupo: grupoVal,
+    email: emailVal,
+    m1: m1_val || 'No finalizado',
+    m1_date: m1_date || '',
+    m2: m2_val || 'No finalizado',
+    m2_date: m2_date || '',
+    m3: m3_val || 'No finalizado',
+    m3_date: m3_date || '',
+    m4: m4_val || 'No finalizado',
+    m4_date: m4_date || '',
+    m5: m5_val || 'No finalizado',
+    m5_date: m5_date || '',
+    completado: isCourseDone,
+    modulos_completados: completedCount,
+    fecha_fin: globalCompletionDate
+};
+});
 
-            return {
-                id: idVal,
-                nombre: nombreVal,
-                grupo: grupoVal,
-                email: emailVal,
-                m1: m1_val || 'No finalizado',
-                m1_date: m1_date || '',
-                m2: m2_val || 'No finalizado',
-                m2_date: m2_date || '',
-                m3: m3_val || 'No finalizado',
-                m3_date: m3_date || '',
-                m4: m4_val || 'No finalizado',
-                m4_date: m4_date || '',
-                m5: m5_val || 'No finalizado',
-                m5_date: m5_date || '',
-                completado: isCourseDone,
-                modulos_completados: completedCount,
-                fecha_fin: globalCompletionDate
-            };
-        });
+// Ordenar por nombre
+window.cleanDataset.sort((a, b) => a.nombre.localeCompare(b.nombre));
+// Inicializar dataset filtrado globalmente con todos los registros
+window.filteredDataset = [...window.cleanDataset];
+currentPage = 1;
 
-        // Ordenar por nombre
+// Actualizar fecha de corte y mostrar el dashboard
+document.getElementById('cutoff-date-badge').innerText = cutoffDateValue;
+document.getElementById('dashboard-content').classList.remove('hidden');
+
+// Poblar el filtro de grupo con los datos ya cargados
+populateGroupFilter();
+
+// Aplicar filtros globales (búsqueda + grupo) y desde ahí recalcular KPIs, gráficos y tabla
+applyGlobalFilters();
+}
+
+         // Ordenar por nombre
         window.cleanDataset.sort((a, b) => a.nombre.localeCompare(b.nombre));
         // Inicializar dataset filtrado globalmente con todos los registros
         window.filteredDataset = [...window.cleanDataset];
