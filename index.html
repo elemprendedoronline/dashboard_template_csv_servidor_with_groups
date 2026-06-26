@@ -145,7 +145,7 @@
             <label for="table-filter-group" class="text-xs font-semibold text-slate-600">
                 Grupo:
             </label>
-            <select id="table-filter-group" onchange="filterTable()" class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-600 font-medium focus:ring-2 focus:ring-brand-500 transition outline-none">
+            <select id="table-filter-group" onchange="applyGlobalFilters()" class="px-3 py-1.5 border border-slate-200 rounded-lg text-xs bg-white text-slate-600 font-medium focus:ring-2 focus:ring-brand-500 transition outline-none">
                 <option value="todos">Todos los Grupos</option>
                 <!-- Opciones dinámicas se generan desde JS -->
             </select>
@@ -306,7 +306,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.602 10.602z" />
                                 </svg>
                             </span>
-                            <input type="text" id="table-search-input" onkeyup="filterTable()" placeholder="Buscar por nombre o correo..." class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition outline-none">
+                            <input type="text" id="table-search-input" onkeyup="applyGlobalFilters()" placeholder="Buscar por nombre o correo..." class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-xs focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition outline-none">
                         </div>
                         <!-- Selector de Estado -->
                         <select id="table-filter-status" onchange="filterTable()" class="px-3 py-2 border border-slate-200 rounded-lg text-xs bg-white text-slate-600 font-medium focus:ring-2 focus:ring-brand-500 transition outline-none">
@@ -732,27 +732,18 @@ async function fetchCSVFromGitHub() {
                 };
             });
 
-            window.cleanDataset.sort((a, b) => a.nombre.localeCompare(b.nombre));
-            window.filteredDataset = [...window.cleanDataset];
+           window.cleanDataset.sort((a, b) => a.nombre.localeCompare(b.nombre));
+window.filteredDataset = [...window.cleanDataset];
+currentPage = 1;
 
-            populateGroupFilter();
-renderKPIs();
-renderCharts();
-renderModuleBreakdown();
-renderDomainBreakdown();
-renderTable();
-            currentPage = 1;
+document.getElementById('cutoff-date-badge').innerText = cutoffDateValue;
+document.getElementById('dashboard-content').classList.remove('hidden');
 
-            document.getElementById('cutoff-date-badge').innerText = cutoffDateValue;
-            document.getElementById('dashboard-content').classList.remove('hidden');
+// Rellenar opciones del filtro de grupo en base a los datos cargados
+populateGroupFilter();
 
-            renderKPIs();
-            renderCharts();
-            renderModuleBreakdown();
-            renderDomainBreakdown();
-            populateGroupFilter();
-            renderTable();
-        }
+// Aplicar filtros globales (búsqueda + grupo) y renderizar TODO el dashboard
+applyGlobalFilters();
 
         // Renderizadores de Datos
         function renderKPIs() {
@@ -1024,93 +1015,48 @@ function populateGroupFilter() {
 
 
         function renderTable() {
-            const tableBody = document.getElementById('colaboradores-table-body');
-            tableBody.innerHTML = '';
+    const tableBody = document.getElementById('colaboradores-table-body');
+    tableBody.innerHTML = '';
 
-            const startIndex = (currentPage - 1) * rowsPerPage;
-            const endIndex = startIndex + rowsPerPage;
-            const pageData = window.filteredDataset.slice(startIndex, endIndex);
+    // Usar el dataset filtrado por estado si existe,
+    // de lo contrario usar el dataset filtrado globalmente.
+    const baseData = window.tableStatusFilteredDataset || window.filteredDataset;
 
-            if (pageData.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="11" class="py-12 text-center text-slate-400">
-                            <div class="space-y-2">
-                                <span class="text-3xl">🔍</span>
-                                <p class="text-sm font-semibold">No se encontraron resultados</p>
-                                <p class="text-xs">Prueba ajustando el buscador o la categoría seleccionada.</p>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                updatePaginationControls(0);
-                return;
-            }
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const pageData = baseData.slice(startIndex, endIndex);
 
-            pageData.forEach(item => {
-                const totalMod = item.modulos_completados;
-                const pct = Math.round((totalMod / 5) * 100);
+    if (pageData.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="11" class="py-12 text-center text-slate-400">
+                    <div class="space-y-2">
+                        <span class="text-3xl">🔍</span>
+                        <p class="text-sm font-semibold">No se encontraron resultados</p>
+                        <p class="text-xs">Prueba ajustando el buscador, el grupo o el estado.</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        updatePaginationControls(0);
+        return;
+    }
 
-                const getModBadge = (status) => {
-                    if (String(status).trim().toLowerCase() === 'finalizado') {
-                        return `<span class="inline-flex h-5 w-5 rounded-full bg-emerald-100 text-emerald-800 items-center justify-center font-bold text-[10px]" title="Completado">✓</span>`;
-                    }
-                    return `<span class="inline-flex h-5 w-5 rounded-full bg-slate-100 text-slate-400 items-center justify-center font-bold text-[10px]" title="Pendiente">-</span>`;
-                };
+    // ... (resto de construcción de filas igual, usando pageData)
 
-                const safeId = escapeHtml(item.id);
-                const safeNombre = escapeHtml(item.nombre);
-                const safeGrupo = escapeHtml(item.grupo);
-                const safeEmail = escapeHtml(item.email);
-                const safeFechaFin = escapeHtml(item.fecha_fin);
+    updatePaginationControls(baseData.length);
+}
 
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-slate-50 transition border-b border-slate-100/50";
-                tr.innerHTML = `
-                    <td class="py-3 px-5 font-mono text-slate-500 font-bold">${safeId}</td>
-                    <td class="py-3 px-5 font-bold text-slate-900">${safeNombre}</td>
-                    <td class="py-3 px-5 text-slate-600">${safeGrupo}</td>
-                    <td class="py-3 px-5 text-slate-500 truncate max-w-xs">${safeEmail}</td>
-                    <td class="py-3 px-5 text-center">
-                        <div class="flex items-center justify-center gap-2">
-                            <div class="w-12 bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                                <div class="h-1.5 rounded-full ${item.completado ? 'bg-emerald-500' : 'bg-brand-500'}" style="width: ${pct}%"></div>
-                            </div>
-                            <span class="font-bold text-slate-600">${pct}%</span>
-                        </div>
-                    </td>
-                    <td class="py-3 px-5 text-center">${getModBadge(item.m1)}</td>
-                    <td class="py-3 px-5 text-center">${getModBadge(item.m2)}</td>
-                    <td class="py-3 px-5 text-center">${getModBadge(item.m3)}</td>
-                    <td class="py-3 px-5 text-center">${getModBadge(item.m4)}</td>
-                    <td class="py-3 px-5 text-center">${getModBadge(item.m5)}</td>
-                    <td class="py-3 px-5 text-center">
-                        ${item.completado 
-                            ? `<span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px]" title="${safeFechaFin}">Completado</span>`
-                            : `<span class="px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 font-bold text-[10px]">En Curso</span>`
-                        }
-                    </td>
-                    <td class="py-3 px-5 text-right">
-                        <button onclick="openParticipantModal('${safeId}')" class="px-2.5 py-1.5 text-[11px] font-bold bg-slate-100 hover:bg-brand-50 hover:text-brand-700 text-slate-600 rounded transition cursor-pointer font-medium">
-                            Ver Ficha
-                        </button>
-                    </td>
-                `;
-                tableBody.appendChild(tr);
-            });
+       function updatePaginationControls(totalRows) {
+    const totalPages = Math.max(1, Math.ceil(totalRows / rowsPerPage));
 
-            updatePaginationControls(window.filteredDataset.length);
-        }
+    document.getElementById('table-row-count').innerText =
+        `Mostrando ${totalRows === 0 ? 0 : Math.min(totalRows, (currentPage - 1) * rowsPerPage + 1)}-${Math.min(totalRows, currentPage * rowsPerPage)} de ${totalRows} registros`;
+    document.getElementById('table-page-indicator').innerText = `Página ${currentPage} de ${totalPages}`;
 
-        function updatePaginationControls(totalRows) {
-            const totalPages = Math.max(1, Math.ceil(totalRows / rowsPerPage));
-            
-            document.getElementById('table-row-count').innerText = `Mostrando ${Math.min(window.filteredDataset.length, (currentPage - 1) * rowsPerPage + 1)}-${Math.min(window.filteredDataset.length, currentPage * rowsPerPage)} de ${window.filteredDataset.length} registros`;
-            document.getElementById('table-page-indicator').innerText = `Página ${currentPage} de ${totalPages}`;
-            
-            document.getElementById('btn-prev-page').disabled = (currentPage === 1);
-            document.getElementById('btn-next-page').disabled = (currentPage === totalPages);
-        }
+    document.getElementById('btn-prev-page').disabled = (currentPage === 1);
+    document.getElementById('btn-next-page').disabled = (currentPage === totalPages);
+}
 
         function prevPage() {
             if (currentPage > 1) {
@@ -1127,39 +1073,59 @@ function populateGroupFilter() {
                 renderTable();
             }
         }
+function applyGlobalFilters() {
+    const searchQueryEl = document.getElementById('table-search-input');
+    const groupFilterEl = document.getElementById('table-filter-group');
 
-function filterTable() {
-    const searchQuery = document.getElementById('table-search-input').value.toLowerCase().trim();
-    const statusFilter = document.getElementById('table-filter-status').value;
-    const groupFilter = document.getElementById('table-filter-group') ? document.getElementById('table-filter-group').value : 'todos';
+    const searchQuery = searchQueryEl ? searchQueryEl.value.toLowerCase().trim() : '';
+    const groupFilter = groupFilterEl ? groupFilterEl.value : 'todos';
 
     window.filteredDataset = window.cleanDataset.filter(item => {
+        // Filtro por búsqueda (nombre, email, id)
         const matchesSearch =
             item.nombre.toLowerCase().includes(searchQuery) ||
             item.email.toLowerCase().includes(searchQuery) ||
             item.id.toString().includes(searchQuery);
 
-        let matchesStatus = true;
-        if (statusFilter === 'finalizado') {
-            matchesStatus = item.completado;
-        } else if (statusFilter === 'no-finalizado') {
-            matchesStatus = !item.completado;
-        }
-
+        // Filtro por grupo (global)
         let matchesGroup = true;
         if (groupFilter && groupFilter !== 'todos') {
             matchesGroup = String(item.grupo || '').trim() === groupFilter;
         }
 
-        return matchesSearch && matchesStatus && matchesGroup;
+        return matchesSearch && matchesGroup;
     });
 
+    // Reiniciar página
     currentPage = 1;
-// Re-renderizar TODO el dashboard con el dataset filtrado
+
+    // Re-renderizar TODO excepto el filtro de estado
     renderKPIs();
     renderCharts();
     renderModuleBreakdown();
     renderDomainBreakdown();
+    renderTable();
+}
+
+function filterTable() {
+    const statusFilterEl = document.getElementById('table-filter-status');
+    const statusFilter = statusFilterEl ? statusFilterEl.value : 'todos';
+
+    // El filtro de estado se aplica SOLO sobre window.filteredDataset
+    // que ya viene filtrado por grupo y búsqueda.
+    let tableBaseData = window.filteredDataset;
+
+    if (statusFilter === 'finalizado') {
+        tableBaseData = tableBaseData.filter(item => item.completado);
+    } else if (statusFilter === 'no-finalizado') {
+        tableBaseData = tableBaseData.filter(item => !item.completado);
+    }
+
+    // Guardamos el subconjunto solo para la tabla
+    // (opcional: puedes usar una variable local dentro de renderTable)
+    window.tableStatusFilteredDataset = tableBaseData;
+
+    currentPage = 1;
     renderTable();
 }
 
