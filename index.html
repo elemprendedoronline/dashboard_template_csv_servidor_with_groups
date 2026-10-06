@@ -1257,7 +1257,7 @@ function filterTable() {
                 return;
             }
 
-            // Preparar los datos para Excel
+                        // Preparar los datos para Excel
             const excelRows = dataToExport.map(item => {
                 const pct = Math.round((item.modulos_completados / 5) * 100);
 
@@ -1268,32 +1268,41 @@ function filterTable() {
                     "Dirección de Correo": item.email,
                     "Progreso (%)": pct,
                     "Módulo 1": item.m1,
+                    "Fecha Finalización Módulo 1": item.m1_date || "",
                     "Módulo 2": item.m2,
+                    "Fecha Finalización Módulo 2": item.m2_date || "",
                     "Módulo 3": item.m3,
+                    "Fecha Finalización Módulo 3": item.m3_date || "",
                     "Módulo 4": item.m4,
+                    "Fecha Finalización Módulo 4": item.m4_date || "",
                     "Módulo 5": item.m5,
+                    "Fecha Finalización Módulo 5": item.m5_date || "",
                     "Curso Finalizado": item.completado ? "Finalizado" : "No finalizado",
-                    "Fecha de Finalización": item.fecha_fin || ""
+                    "Fecha de Finalización del Curso": item.fecha_fin || ""
                 };
             });
-
             // Crear la hoja de Excel
             const worksheet = XLSX.utils.json_to_sheet(excelRows);
 
-            // Ajustar el ancho de las columnas
+                        // Ajustar el ancho de las columnas
             worksheet["!cols"] = [
                 { wch: 10 },  // ID
                 { wch: 30 },  // Nombre
                 { wch: 25 },  // Grupo
                 { wch: 35 },  // Correo
                 { wch: 14 },  // Progreso
-                { wch: 16 },  // Módulo 1
-                { wch: 16 },  // Módulo 2
-                { wch: 16 },  // Módulo 3
-                { wch: 16 },  // Módulo 4
-                { wch: 16 },  // Módulo 5
+                { wch: 18 },  // Módulo 1
+                { wch: 28 },  // Fecha Módulo 1
+                { wch: 18 },  // Módulo 2
+                { wch: 28 },  // Fecha Módulo 2
+                { wch: 18 },  // Módulo 3
+                { wch: 28 },  // Fecha Módulo 3
+                { wch: 18 },  // Módulo 4
+                { wch: 28 },  // Fecha Módulo 4
+                { wch: 18 },  // Módulo 5
+                { wch: 28 },  // Fecha Módulo 5
                 { wch: 20 },  // Curso finalizado
-                { wch: 25 }   // Fecha de finalización
+                { wch: 30 }   // Fecha de finalización del curso
             ];
 
             // Crear el libro de Excel
